@@ -110,7 +110,7 @@ export function ActivityRow({ event, agentMap, entityNameMap, entityTitleMap, cl
 
   const inner = (
     <div className="flex gap-3">
-      <p className="flex-1 min-w-0 truncate">
+      <div className="flex-1 min-w-0 truncate">
         <Identity
           name={actorName}
           size="xs"
@@ -119,7 +119,7 @@ export function ActivityRow({ event, agentMap, entityNameMap, entityTitleMap, cl
         <span className="text-muted-foreground ml-1">{verb} </span>
         {name && <span className="font-medium">{name}</span>}
         {entityTitle && <span className="text-muted-foreground ml-1">— {entityTitle}</span>}
-      </p>
+      </div>
       <span className="text-xs text-muted-foreground shrink-0 pt-0.5">{timeAgo(event.createdAt)}</span>
     </div>
   );

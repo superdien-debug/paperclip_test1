@@ -87,7 +87,7 @@ export function SidebarAgents() {
                 open && "rotate-90"
               )}
             />
-            <span className="text-[10px] font-medium uppercase tracking-widest font-mono text-muted-foreground/60">
+            <span className="text-[11px] font-medium uppercase tracking-tighter text-muted-foreground/60">
               Agents
             </span>
           </CollapsibleTrigger>
@@ -122,7 +122,7 @@ export function SidebarAgents() {
                     : "text-foreground/80 hover:bg-accent/50 hover:text-foreground"
                 )}
               >
-                <AgentIcon icon={agent.icon} className="shrink-0 h-3.5 w-3.5 text-muted-foreground" />
+                <AgentIcon icon={agent.icon} name={agent.name} className="shrink-0 h-3.5 w-3.5 text-muted-foreground" />
                 <span className="flex-1 truncate">{agent.name}</span>
                 {runCount > 0 && (
                   <span className="ml-auto flex items-center gap-1.5 shrink-0">

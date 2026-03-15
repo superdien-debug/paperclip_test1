@@ -398,17 +398,26 @@ export function CompanySettings() {
                 selectedCompany.status === "archived"
               }
               onClick={() => {
-                if (!selectedCompanyId) return;
+                console.log("Archive clicked, showing confirm dialog...");
                 const confirmed = window.confirm(
                   `Archive company "${selectedCompany.name}"? It will be hidden from the sidebar.`
                 );
+                console.log("Archive confirmed:", confirmed);
                 if (!confirmed) return;
+
+                if (!selectedCompanyId) {
+                  console.error("No selectedCompanyId found!");
+                  return;
+                }
+
                 const nextCompanyId =
                   companies.find(
                     (company) =>
                       company.id !== selectedCompanyId &&
                       company.status !== "archived"
                   )?.id ?? null;
+
+                console.log("Triggering archive mutation for companyId:", selectedCompanyId, "nextCompanyId:", nextCompanyId);
                 archiveMutation.mutate({
                   companyId: selectedCompanyId,
                   nextCompanyId

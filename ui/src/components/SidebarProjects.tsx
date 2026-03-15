@@ -146,7 +146,7 @@ export function SidebarProjects() {
                 open && "rotate-90"
               )}
             />
-            <span className="text-[10px] font-medium uppercase tracking-widest font-mono text-muted-foreground/60">
+            <span className="text-[11px] font-medium uppercase tracking-tighter text-muted-foreground/60">
               Projects
             </span>
           </CollapsibleTrigger>

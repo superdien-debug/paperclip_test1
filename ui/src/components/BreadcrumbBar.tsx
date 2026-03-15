@@ -1,5 +1,6 @@
 import { Link } from "@/lib/router";
 import { Menu } from "lucide-react";
+import { cn } from "../lib/utils";
 import { useBreadcrumbs } from "../context/BreadcrumbContext";
 import { useSidebar } from "../context/SidebarContext";
 import { Button } from "@/components/ui/button";

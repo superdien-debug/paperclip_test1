@@ -111,10 +111,10 @@ function SortableCompanyItem({
             {/* Selection indicator pill */}
             <div
               className={cn(
-                "absolute left-[-14px] w-1 rounded-r-full bg-foreground transition-[height] duration-150",
+                "absolute left-[-14px] w-2 bg-primary transition-[height] duration-150 shadow-[1px_0_0_black]",
                 isSelected
-                  ? "h-5"
-                  : "h-0 group-hover:h-2"
+                  ? "h-6"
+                  : "h-0 group-hover:h-3"
               )}
             />
             <div

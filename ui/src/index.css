@@ -40,6 +40,10 @@
   --radius-md: 0.5rem;
   --radius-lg: 0px;
   --radius-xl: 0px;
+  
+  /* Professional Fonts */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 :root {
@@ -120,28 +124,41 @@
   }
   html {
     height: 100%;
-    -webkit-tap-highlight-color: color-mix(in oklab, var(--foreground) 20%, transparent);
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
     height: 100%;
     overflow: hidden;
   }
-  h1,
-  h2,
-  h3 {
+  h1, h2, h3, h4 {
+    letter-spacing: normal;
     text-wrap: balance;
   }
-  /* Prevent double-tap-to-zoom on interactive elements for mobile */
-  a,
-  button,
-  [role="button"],
-  input,
-  select,
-  textarea,
-  label {
-    touch-action: manipulation;
-  }
+  @keyframes belt-slide {
+  from { background-position-x: 0; }
+  to { background-position-x: 40px; }
+}
+
+@keyframes conveyor-slide {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes scanner-line {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(60px); opacity: 1; }
+}
+
+.animate-conveyor-slide {
+  animation: conveyor-slide 20s linear infinite;
+}
+
+.animate-scanner-line {
+  animation: scanner-line 2s ease-in-out infinite;
+}
+  /* Global post-rendering effects removed */
 }
 
 @media (pointer: coarse) {
@@ -567,6 +584,9 @@
   border-radius: calc(var(--radius) - 3px);
   background-color: color-mix(in oklab, var(--accent) 35%, transparent);
   overflow-x: auto;
+}
+
+@layer utilities {
 }
 
 .paperclip-mermaid svg {

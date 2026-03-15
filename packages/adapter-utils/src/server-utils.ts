@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { spawn, spawnSync, execSync, type ChildProcess } from "node:child_process";
 import { constants as fsConstants, promises as fs } from "node:fs";
 import path from "node:path";
 
@@ -204,6 +204,32 @@ function quoteForCmd(arg: string) {
   return /[\s"&<>|^()]/.test(escaped) ? `"${escaped}"` : escaped;
 }
 
+function getShortPath(longPath: string): string {
+  if (!longPath.includes(" ")) return longPath;
+  try {
+    // PowerShell's Scripting.FileSystemObject is extremely reliable for short path resolution
+    const res = spawnSync(
+      "powershell",
+      [
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        `(new-object -com scripting.filesystemobject).getfile("${longPath}").shortpath`,
+      ],
+      {
+        stdio: ["ignore", "pipe", "ignore"],
+      },
+    );
+    const output = res.stdout?.toString().trim();
+    if (output && output.length > 0 && !output.includes(" ")) {
+      return output;
+    }
+  } catch {
+    // ignore
+  }
+  return longPath;
+}
+
 async function resolveSpawnTarget(
   command: string,
   args: string[],
@@ -211,18 +237,36 @@ async function resolveSpawnTarget(
   env: NodeJS.ProcessEnv,
 ): Promise<SpawnTarget> {
   const resolved = await resolveCommandPath(command, cwd, env);
-  const executable = resolved ?? command;
+  let executable = resolved ?? command;
 
   if (process.platform !== "win32") {
     return { command: executable, args };
   }
 
-  if (/\.(cmd|bat)$/i.test(executable)) {
+  const shortPath = getShortPath(executable);
+  if (shortPath !== executable) {
+    executable = shortPath;
+  } else if (executable.includes(" ")) {
+    // If we couldn't get a short path and it still has spaces, 
+    // and if the original command was a simple name (no separators),
+    // fallback to just using the command name. cmd /c gemini is more 
+    // robust than cmd /c "C:\Users\PC Market\...\gemini.cmd"
+    const isSimpleName = !command.includes("/") && !command.includes("\\");
+    if (isSimpleName) {
+      executable = command;
+    }
+  }
+
+  if (/\.(cmd|bat)$/i.test(executable) || (executable === command && !executable.includes("."))) {
     const shell = env.ComSpec || process.env.ComSpec || "cmd.exe";
-    const commandLine = [quoteForCmd(executable), ...args.map(quoteForCmd)].join(" ");
+    
+    // Pattern: ["/d", "/c", quote(executable), ...quote(args)]
+    // This is the most robust way to invoke cmd /c with absolute paths and multiple args on Windows.
+    // Node.js will concatenate these with spaces, and since we use windowsVerbatimArguments: true,
+    // we have full control over the final command line string.
     return {
       command: shell,
-      args: ["/d", "/s", "/c", commandLine],
+      args: ["/d", "/c", quoteForCmd(executable), ...args.map(quoteForCmd)],
     };
   }
 
@@ -453,6 +497,7 @@ export async function runChildProcess(
           cwd: opts.cwd,
           env: mergedEnv,
           shell: false,
+          windowsVerbatimArguments: process.platform === "win32",
           stdio: [opts.stdin != null ? "pipe" : "ignore", "pipe", "pipe"],
         }) as ChildProcessWithEvents;
 
