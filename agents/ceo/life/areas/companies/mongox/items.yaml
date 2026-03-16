@@ -1,0 +1,15 @@
+- id: fact_mission
+  text: The mission is to build an AI operating system for mobility organizations.
+  source_type: mission_statement
+  status: active
+  timestamp: 2026-03-16T04:23:00Z
+- id: fact_leadership_fe
+  text: Founding Engineer (0082a153-1949-498b-8364-5c5ba9211b13) is assigned to technical foundation tasks.
+  source_type: agent_assignment
+  status: active
+  timestamp: 2026-03-16T04:25:00Z
+- id: fact_leadership_pc
+  text: Product Chief (897144bd-031e-45ff-8546-bea8cd64e285) is assigned to product strategy and design tasks.
+  source_type: agent_assignment
+  status: active
+  timestamp: 2026-03-16T04:25:00Z
