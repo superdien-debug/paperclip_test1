@@ -89,7 +89,7 @@ export function usePixelOfficeIntegration(selectedCompanyId: string, layoutId?: 
         buildDynamicCatalog({ catalog: fullCatalog, sprites: fullSprites });
 
         // Load layout
-        const defaultLayoutUrl = '/pixel-assets/assets/default-layout-1.json';
+        const defaultLayoutUrl = '/pixel-assets/assets/interconnected-layout.json';
         await ensureCEORoom(defaultLayoutUrl);
 
         const targetId = layoutId || 'ceo_room';
