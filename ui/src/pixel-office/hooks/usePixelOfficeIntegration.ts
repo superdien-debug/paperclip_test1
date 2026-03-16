@@ -16,7 +16,7 @@ import {
   loadFurnitureGroup
 } from '../pixelLoader';
 
-import { getLayoutById, ensureCEORoom } from '../layout/layoutStore';
+import { getLayoutById, ensureCEORoom, getPredefinedLayouts } from '../layout/layoutStore';
 
 const CHARACTER_SPRITES = ["doraemon", "nobita", "shizuka", "gian", "suneo"];
 
@@ -87,24 +87,6 @@ export function usePixelOfficeIntegration(selectedCompanyId: string, layoutId?: 
         });
 
         buildDynamicCatalog({ catalog: fullCatalog, sprites: fullSprites });
-
-        // Load layout
-        const defaultLayoutUrl = '/pixel-assets/assets/interconnected-layout.json';
-        await ensureCEORoom(defaultLayoutUrl);
-
-        const targetId = layoutId || 'ceo_room';
-        const entry = getLayoutById(targetId);
-        
-        if (entry) {
-          officeStateRef.current.rebuildFromLayout(entry.layout);
-        } else {
-          // Fallback to fetch if not in store (or just use CEO Room)
-          const layoutRes = await fetch(defaultLayoutUrl);
-          const layout = await layoutRes.json();
-          if (layout) {
-            officeStateRef.current.rebuildFromLayout(layout);
-          }
-        }
         
         setAssetsLoaded(true);
       } catch (err) {
@@ -113,6 +95,57 @@ export function usePixelOfficeIntegration(selectedCompanyId: string, layoutId?: 
     }
     loadAllAssets();
   }, []);
+
+  // 2.5 Load Layout when ID or Company changes
+  useEffect(() => {
+    if (!assetsLoaded) return;
+
+    async function loadCurrentLayout() {
+      const targetId = layoutId || 'ceo_room';
+      const storageKey = `pixel_office_layout_${selectedCompanyId}_${targetId}`;
+      const stored = localStorage.getItem(storageKey);
+
+      if (stored) {
+        try {
+          const layout = JSON.parse(stored);
+          officeStateRef.current.rebuildFromLayout(layout);
+          return;
+        } catch (e) {
+          console.error('Failed to parse stored layout:', e);
+        }
+      }
+
+      // If not in storage, try predefined
+      const predefined = getPredefinedLayouts().find((l: any) => l.id === targetId);
+      if (predefined) {
+        try {
+          const layoutRes = await fetch(predefined.url);
+          const layout = await layoutRes.json();
+          if (layout) {
+            officeStateRef.current.rebuildFromLayout(layout);
+            localStorage.setItem(storageKey, JSON.stringify(layout));
+            return;
+          }
+        } catch (e) {
+          console.error('Failed to fetch predefined layout:', e);
+        }
+      }
+
+      // Fallback: CEO Room or Default
+      const defaultLayoutUrl = '/pixel-assets/assets/interconnected-layout.json';
+      try {
+        const layoutRes = await fetch(defaultLayoutUrl);
+        const layout = await layoutRes.json();
+        if (layout) {
+          officeStateRef.current.rebuildFromLayout(layout);
+        }
+      } catch (e) {
+        console.error('Fallback layout load failed:', e);
+      }
+    }
+
+    loadCurrentLayout();
+  }, [assetsLoaded, layoutId, selectedCompanyId]);
 
   // 3. Sync Agents to OfficeState
   useEffect(() => {
@@ -169,16 +202,33 @@ export function usePixelOfficeIntegration(selectedCompanyId: string, layoutId?: 
     });
   }, [agents, runs, assetsLoaded]);
 
+  // 4. Persistence & Management
+  const reloadDefaultLayout = async () => {
+    const defaultLayoutUrl = '/pixel-assets/assets/interconnected-layout.json';
+    try {
+      const layoutRes = await fetch(defaultLayoutUrl);
+      const layout = await layoutRes.json();
+      if (layout) {
+        officeStateRef.current.rebuildFromLayout(layout);
+        // Also save to storage to overwrite customizations
+        const targetId = layoutId || 'ceo_room';
+        localStorage.setItem(`pixel_office_layout_${selectedCompanyId}_${targetId}`, JSON.stringify(layout));
+      }
+    } catch (err) {
+      console.error('Failed to reload default layout:', err);
+    }
+  };
+
   const saveLayout = async (layout: OfficeLayout) => {
-    // For now, save to local storage or console
-    console.log('Saving layout:', layout);
-    localStorage.setItem(`pixel_office_layout_${selectedCompanyId}_${layoutId || 'default'}`, JSON.stringify(layout));
+    const targetId = layoutId || 'ceo_room';
+    localStorage.setItem(`pixel_office_layout_${selectedCompanyId}_${targetId}`, JSON.stringify(layout));
   };
 
   return {
     officeState: officeStateRef.current,
     assetsLoaded,
     error: null,
-    saveLayout
+    saveLayout,
+    reloadDefaultLayout
   };
 }

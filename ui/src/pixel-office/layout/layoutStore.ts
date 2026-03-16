@@ -2,6 +2,23 @@ import { OfficeLayout } from '../types';
 
 const STORAGE_KEY = 'paperclip_office_layouts';
 
+export const PREDEFINED_LAYOUTS = [
+  {
+    id: 'interconnected_office',
+    name: 'Interconnected Office',
+    url: '/pixel-assets/assets/interconnected-layout.json',
+  },
+  {
+    id: 'compact_office',
+    name: 'Compact Office',
+    url: '/pixel-assets/assets/default-layout-1.json',
+  },
+];
+
+export function getPredefinedLayouts() {
+  return PREDEFINED_LAYOUTS;
+}
+
 export interface LayoutEntry {
   id: string;
   name: string;
@@ -49,5 +66,15 @@ export async function ensureCEORoom(defaultLayoutUrl: string) {
     saveLayout('ceo_room', 'CEO Room', layout);
   } catch (e) {
     console.error('Failed to pre-populate CEO Room:', e);
+  }
+}
+
+export async function fetchPredefinedLayout(url: string): Promise<OfficeLayout | null> {
+  try {
+    const res = await fetch(url);
+    return await res.json();
+  } catch (e) {
+    console.error('Failed to fetch predefined layout:', e);
+    return null;
   }
 }

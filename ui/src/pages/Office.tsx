@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useCompany } from '../context/CompanyContext';
 import { usePixelOfficeIntegration } from '../pixel-office/hooks/usePixelOfficeIntegration';
 import { OfficeCanvas } from '../pixel-office/components/OfficeCanvas';
@@ -9,7 +9,14 @@ import {
 } from '../pixel-office/editor';
 import { TileType } from '../pixel-office/types';
 import { Button } from '@/components/ui/button';
-import { Save, Settings2 } from 'lucide-react';
+import { Save, Settings2, RefreshCcw, ChevronDown, Target } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { getPredefinedLayouts } from '../pixel-office/layout/layoutStore';
 import { 
   layoutToTileMap,
   getBlockedTiles,
@@ -22,7 +29,8 @@ import {
 } from '../pixel-office/editor/editorActions';
 
 export function Office() {
-  const { layoutId } = useParams();
+  const { companyPrefix, layoutId } = useParams();
+  const navigate = useNavigate();
   const { selectedCompany } = useCompany();
   const companyId = selectedCompany?.id || '';
   
@@ -31,7 +39,11 @@ export function Office() {
     assetsLoaded,
     error,
     saveLayout,
-  } = usePixelOfficeIntegration(companyId, layoutId || 'default_ceo');
+    reloadDefaultLayout,
+  } = usePixelOfficeIntegration(companyId, layoutId || 'ceo_room');
+
+  const layouts = getPredefinedLayouts();
+  const currentLayoutName = layouts.find(l => l.id === layoutId)?.name || (layoutId?.replace('_', ' ') || 'CEO Room');
 
   const {
     state: es,
@@ -59,6 +71,12 @@ export function Office() {
     } catch (err) {
       console.error('Failed to save layout:', err);
     }
+  };
+
+  const handleCenterView = () => {
+    panRef.current = { x: 0, y: 0 };
+    setZoom(2);
+    officeState.cameraFollowId = null;
   };
 
   const onEditorTileAction = (col: number, row: number) => {
@@ -126,10 +144,33 @@ export function Office() {
     <div className="flex h-screen bg-background overflow-hidden">
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <div className="flex items-center justify-between border-b px-4 py-2 bg-card/50">
-          <h1 className="text-lg font-semibold capitalize tracking-tight">
-            {layoutId?.replace('_', ' ') || 'CEO Room'}
-          </h1>
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 px-2 font-semibold capitalize tracking-tight gap-1">
+                  {currentLayoutName}
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuItem onClick={() => navigate(`/${companyPrefix}/office/ceo_room`)}>
+                  CEO Room
+                </DropdownMenuItem>
+                {layouts.map((l) => (
+                  <DropdownMenuItem key={l.id} onClick={() => navigate(`/${companyPrefix}/office/${l.id}`)}>
+                    {l.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleCenterView} title="Center View">
+              <Target className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={reloadDefaultLayout} title="Reload Original Layout">
+              <RefreshCcw className="h-4 w-4" />
+            </Button>
             {isEditMode && (
               <Button variant="outline" size="sm" onClick={handleSave} disabled={!es.isDirty}>
                 <Save className="mr-2 h-4 w-4" /> Save
